@@ -53,8 +53,15 @@ set /p GNAME=Enter the Name of the Game:
 cls
 echo.
 echo Packing...
-make_cdn_cia %INPUT% "%GNAME%.cia" >nul
-rmdir /S /Q .\%INPUT%\
+make_cdn_cia %INPUT% "%GNAME%.cia" >nul 2>&1
+if errorlevel 1 (
+	cls
+	echo.
+	echo Download failed, please press Enter to finish.
+	del "%GNAME%.cia" >nul 2>&1
+	pause >nul
+)
+rmdir /S /Q .\%INPUT%\ >nul 2>&1
 cls
 echo.
 echo Finished, please press any key to exit.
