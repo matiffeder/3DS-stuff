@@ -25,9 +25,21 @@ for /L %%a in (12,-1,0) do (
 set %~2=%len%
 exit/B
 
+:ERROR
+cls
+echo.
+echo Download failed, please press any key to finish.
+pause >nul
+goto Finished
+
 :DownloadCIA
 aria2c http://3ds.titlekeys.gq/ticket/%INPUT% --dir=./%INPUT% --out=cetk --allow-overwrite=true --conf-path=aria2.conf >nul
+if %errorlevel% neq 0 goto ERROR
 aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
+if %errorlevel% neq 0 (
+	aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
+	if %errorlevel% neq 0 goto ERROR
+)
 ctrtool -t tmd ./%INPUT%/tmd >content.txt
 set TEXT="Content id"
 set FILE="content.txt"
@@ -42,6 +54,10 @@ for /f "delims=" %%d in ('findstr /c:%TEXT% %FILE%') do (
 	echo.
 	echo #!i! data
 	aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
+	if %errorlevel% neq 0 (
+		aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
+		if %errorlevel% neq 0 goto ERROR
+	)
 )
 del content.txt >nul 2>&1
 for /f %%i in ('dir .\%INPUT% /ad /b') do set FOLDN=%%i
@@ -54,16 +70,15 @@ cls
 echo.
 echo Packing...
 make_cdn_cia %INPUT% "%GNAME%.cia" >nul 2>&1
-if errorlevel 1 (
-	cls
-	echo.
-	echo Download failed, please press Enter to finish.
+if %errorlevel% neq 0 (
 	del "%GNAME%.cia" >nul 2>&1
-	pause >nul
+	goto ERROR
 )
-rmdir /S /Q .\%INPUT%\ >nul 2>&1
 cls
 echo.
 echo Finished, please press any key to exit.
 pause >nul
+
+:Finished
+rmdir /S /Q .\%INPUT%\ >nul 2>&1
 REM matif
