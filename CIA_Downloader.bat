@@ -19,8 +19,8 @@ goto menu
 REM https://www.dostips.com/forum/viewtopic.php?t=1485
 set "token=#%~1" & set "len=0"
 for /L %%a in (12,-1,0) do (
-    set/a "len|=1<<%%a"
-    for %%i in (!len!) do if "!token:~%%i,1!"=="" set/A "len&=~1<<%%a"
+	set/a "len|=1<<%%a"
+	for %%i in (!len!) do if "!token:~%%i,1!"=="" set/A "len&=~1<<%%a"
 )
 set %~2=%len%
 exit/B
@@ -29,16 +29,15 @@ exit/B
 cls
 echo.
 echo Download failed, please press any key to finish.
-pause >nul
 goto Finished
 
 :DownloadCIA
 aria2c http://3ds.titlekeys.gq/ticket/%INPUT% --dir=./%INPUT% --out=cetk --allow-overwrite=true --conf-path=aria2.conf >nul
-if %errorlevel% neq 0 goto ERROR
+if errorlevel 1 goto ERROR
 aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
-if %errorlevel% neq 0 (
+if errorlevel 1 (
 	aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
-	if %errorlevel% neq 0 goto ERROR
+	if errorlevel 1 goto ERROR
 )
 ctrtool -t tmd ./%INPUT%/tmd >content.txt
 set TEXT="Content id"
@@ -54,12 +53,17 @@ for /f "delims=" %%d in ('findstr /c:%TEXT% %FILE%') do (
 	echo.
 	echo #!i! data
 	aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
-	if %errorlevel% neq 0 (
+	if errorlevel 1 (
+		cls
+		echo.
+		echo Downloding...
+		echo Close the window to cancel for next time resume.
+		echo.
+		echo #!i! data
 		aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
-		if %errorlevel% neq 0 goto ERROR
+		if errorlevel 1 goto ERROR
 	)
 )
-del content.txt >nul 2>&1
 for /f %%i in ('dir .\%INPUT% /ad /b') do set FOLDN=%%i
 move .\%INPUT%\%FOLDN%\* .\%INPUT%\ >nul
 cls
@@ -69,16 +73,19 @@ set /p GNAME=Enter the Name of the Game:
 cls
 echo.
 echo Packing...
-make_cdn_cia %INPUT% "%GNAME%.cia" >nul 2>&1
-if %errorlevel% neq 0 (
+make_cdn_cia %INPUT% "%GNAME%.cia" 2>ERROR
+for /f %%i in ("ERROR") do set EMPTY=%%~zi
+if %EMPTY% gtr 0 (
 	del "%GNAME%.cia" >nul 2>&1
 	goto ERROR
 )
 cls
 echo.
 echo Finished, please press any key to exit.
-pause >nul
 
 :Finished
+del ERROR >nul 2>&1
+del content.txt >nul 2>&1
 rmdir /S /Q .\%INPUT%\ >nul 2>&1
+pause >nul
 REM matif
