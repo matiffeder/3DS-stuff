@@ -4,6 +4,7 @@ title Batch CIA 3DS Decryptor
 SetLocal EnableDelayedExpansion
 echo %date% %time% >log.txt 2>&1
 echo Decrypting...
+for %%a in (*.ncch) do del "%%a" >nul
 for %%a in (*.3ds) do (
 	set CUTN=%%~na
 	if /i x!CUTN!==x!CUTN:decrypted=! (
@@ -23,7 +24,6 @@ for %%a in (*.3ds) do (
 		makerom -f cci -ignoresign -target p -o "!CUTN!-decrypted.3ds"!ARG! >>log.txt 2>&1
 	)
 )
-for %%a in (*.ncch) do del "%%a" >nul
 for %%a in (*.cia) do (
 	set CUTN=%%~na
 	if /i x!CUTN!==x!CUTN:decrypted=! (
@@ -38,7 +38,7 @@ for %%a in (*.cia) do (
 				set ARG=!ARG! -i "%%f:!i!:!i!"
 				set /a i+=1
 			)
-			makerom -f cia -ignoresign -target p -o "!CUTN!-dec.cia"!ARG! >>log.txt 2>&1
+			makerom -f cia -ignoresign -target p -o "!CUTN!-decfirst.cia"!ARG! >>log.txt 2>&1
 		)
 		findstr /pr "^T.*D.*0004000E ^T.*D.*0004008C" !FILE! >nul
 		if not errorlevel 1 (
@@ -62,11 +62,11 @@ for %%a in (*.cia) do (
 	)
 )
 del content.txt >nul
-for %%a in (*-dec.cia) do (
+for %%a in (*-decfirst.cia) do (
 	set CUTN=%%~na
-	makerom -ciatocci "%%a" -o "!CUTN:-dec=!-decrypted.cci" >>log.txt 2>&1
+	makerom -ciatocci "%%a" -o "!CUTN:-decfirst=-decrypted!.cci" >>log.txt 2>&1
 )
-for %%a in (*-dec.cia) do del "%%a" >nul
+for %%a in (*-decfirst.cia) do del "%%a" >nul
 for %%a in (*.ncch) do del "%%a" >nul
 cls
 echo Finished, please press any key to exit.
