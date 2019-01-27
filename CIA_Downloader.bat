@@ -9,7 +9,7 @@ set INPUT=0
 echo.
 set /p INPUT=Enter the Title ID of the Game:
 call :STRLEN %INPUT%, LEN
-if %LEN%==16 goto DownloadCIA
+if %LEN%==16 goto CETK
 echo.
 echo Please Enter a Valid ID, eg. 0004000000030800 or 0004000000040a00, Enter to Continue.
 pause >nul
@@ -31,14 +31,24 @@ echo.
 echo Download failed, please press any key to finish.
 goto Finished
 
-:DownloadCIA
-aria2c http://3ds.titlekeys.gq/ticket/%INPUT% --dir=./%INPUT% --out=cetk --allow-overwrite=true --conf-path=aria2.conf >nul
-if errorlevel 1 goto ERROR
+:CETK
+cls
+echo.
+echo Checking...
+aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/cetk --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
+if %errorlevel%==0 goto TMD
+aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/cetk --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
+if %errorlevel%==0 goto TMD
+aria2c http://3DS.titlekeys.gq/ticket/%INPUT% --dir=./%INPUT% --out=cetk --allow-overwrite=true --conf-path=aria2.conf >nul
+if not %errorlevel%==0 goto ERROR
+
+:TMD
 aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
-if errorlevel 1 (
-	aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
-	if errorlevel 1 goto ERROR
-)
+if %errorlevel%==0 goto DownloadCIA
+aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/tmd --dir=./%INPUT% --allow-overwrite=true --conf-path=aria2.conf >nul
+if not %errorlevel%==0 goto ERROR
+
+:DownloadCIA
 ctrtool -t tmd ./%INPUT%/tmd >content.txt
 set TEXT="Content id"
 set FILE="content.txt"
@@ -53,21 +63,22 @@ for /f "delims=" %%d in ('findstr /c:%TEXT% %FILE%') do (
 	echo.
 	echo #!i! data
 	aria2c http://nus.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
-	if errorlevel 1 (
-		cls
-		echo.
-		echo Downloding...
-		echo Close the window to cancel for next time resume.
-		echo.
-		echo #!i! data
-		aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
-		if errorlevel 1 goto ERROR
-	)
+	if %errorlevel%==0 goto MAKE
+	cls
+	echo.
+	echo Downloding...
+	echo Close the window to cancel for next time resume.
+	echo.
+	echo #!i! data
+	aria2c http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/%INPUT%/!CONLINE:~24,8! --dir=./%INPUT% --conf-path=aria2.conf --console-log-level=error
+	if not %errorlevel%==0 goto ERROR
 )
-for /f %%i in ('dir .\%INPUT% /ad /b') do set FOLDN=%%i
-move .\%INPUT%\%FOLDN%\* .\%INPUT%\ >nul
+
+EndLocal
+:MAKE
 cls
 echo.
+echo Do not insert \/:^?"<>|
 set GNAME=
 set /p GNAME=Enter the Name of the Game:
 cls
